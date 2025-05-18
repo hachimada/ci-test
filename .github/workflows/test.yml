@@ -51,7 +51,7 @@ jobs:
         run: poetry run ruff check .
 
       - name: mypy
-        run: poetry run mypy pycocoedit
+        run: poetry run mypy src
 
       # ---------- Test + (conditionally) coverage ----------
       - name: Run tests
@@ -59,7 +59,7 @@ jobs:
           source .venv/bin/activate
           if [ "${{ matrix.coverage }}" = "true" ]; then
             poetry run pytest \
-              --cov=pycocoedit \
+              --cov=src \
               --cov-report=xml \
               --cov-branch \
               --cov-report=term-missing \
