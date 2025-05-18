@@ -45,7 +45,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          poetry install --no-interaction
+          poetry install --no-interaction --no-root
 
       - name: Ruff lint
         run: poetry run ruff check .
