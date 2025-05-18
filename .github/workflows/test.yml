@@ -57,14 +57,4 @@ jobs:
       - name: Run tests
         run: |
           source .venv/bin/activate
-          if [ "${{ matrix.coverage }}" = "true" ]; then
-            poetry run pytest \
-              --cov=src \
-              --cov-report=xml \
-              --cov-branch \
-              --cov-report=term-missing \
-              --junitxml=junit.xml \
-              -o junit_family=legacy
-          else
-            poetry run pytest -q
-          fi
+          poetry run pytest 
