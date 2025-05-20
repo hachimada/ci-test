@@ -11,6 +11,7 @@ on:
     types: [opened, reopened]
   workflow_dispatch:
 
+# cancel in-progress jobs with the same name
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
