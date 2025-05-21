@@ -18,9 +18,10 @@ jobs:
 
       - name: Check pushed tag on release/** branch
         run: |
-          branches=$(git branch -r --contains "$GITHUB_SHA" | grep 'origin/release/')
-          if [ -z "$branches" ]; then
-            echo "Tag is not on a release/** branch. Skipping..." 
+          if git branch -r --contains "$GITHUB_SHA" | grep -q 'origin/release/'; then
+            echo "Tag is on release/** branch. Continue..."
+          else
+            echo "Tag is not on a release/** branch. Skipping..."
             exit 0
           fi
 
