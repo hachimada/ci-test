@@ -6,9 +6,8 @@ on:
       - "v[0-9]+.[0-9]+.[0-9]+"
       - "v[0-9]+.[0-9]+.[0-9]+rc[0-9]+"
     branches:
-      - '*'
+      - 'main'
   pull_request:
-    types: [opened, reopened]
   workflow_dispatch:
 
 # cancel in-progress jobs with the same name
