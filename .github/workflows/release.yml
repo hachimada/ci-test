@@ -14,7 +14,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # include tag
 
       - name: Check pushed tag on release/** branch
         run: |
@@ -38,22 +38,20 @@ jobs:
         id: version_check
         run: |
           TAG_REF="${GITHUB_REF_NAME}"
-          TAG_REF="${TAG_REF#refs/tags/}"
+          TAG="${TAG_REF#refs/tags/}"
 
-          CLEAN_TAG="${TAG_REF#v}"
-
-          echo "Tag version (from GitHub): $CLEAN_TAG"
+          echo "Tag version (from GitHub): $TAG"
 
           CURRENT_VERSION=$(python -c "import toml; print(toml.load('pyproject.toml')['tool']['poetry']['version'])")
 
           echo "Version in pyproject.toml: $CURRENT_VERSION"
 
-          if [ "$CURRENT_VERSION" != "$CLEAN_TAG" ]; then
-            echo "ERROR: Version mismatch. Tag=$CLEAN_TAG, pyproject.toml=$CURRENT_VERSION"
+          if [ "$CURRENT_VERSION" != "$TAG" ]; then
+            echo "ERROR: Version mismatch. Tag=$TAG, pyproject.toml=$CURRENT_VERSION"
             exit 1
           fi
 
-          if [[ "$CLEAN_TAG" == *"rc"* ]]; then
+          if [[ "$TAG" == *"rc"* ]]; then
             echo "deploy_target=testpypi" >> $GITHUB_OUTPUT
           else
             echo "deploy_target=pypi" >> $GITHUB_OUTPUT
