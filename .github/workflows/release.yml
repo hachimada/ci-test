@@ -17,25 +17,30 @@ jobs:
           fetch-depth: 0  # include tag
 
       - name: Check pushed tag on release/** branch
+        id: check_branch
         run: |
           if git branch -r --contains "$GITHUB_SHA" | grep -q 'origin/release/'; then
-            echo "Tag is on release/** branch. Continue..."
+            echo "should_publish=true"  >> "$GITHUB_OUTPUT"
+            echo "Tag is on release/** branch. Continue."
           else
-            echo "Tag is not on a release/** branch. Skipping..."
-            exit 0
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+            echo "Tag is NOT on release/** branch. Skip publish."
           fi
 
 
       - name: Set up Python
+        if: steps.check_branch.outputs.should_publish == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: install toml
+        if: steps.check_branch.outputs.should_publish == 'true'
         run: python -m pip install toml
 
       # Step to compare the version by tag and the version in pyproject.toml
       - name: Determine and check version
+        if: steps.check_branch.outputs.should_publish == 'true'
         id: version_check
         run: |
           TAG_REF="${GITHUB_REF_NAME}"
@@ -59,6 +64,7 @@ jobs:
           fi
 
       - name: Install Poetry
+        if: steps.check_branch.outputs.should_publish == 'true'
         uses: snok/install-poetry@v1
         with:
           virtualenvs-create: true
@@ -66,22 +72,22 @@ jobs:
           installer-parallel: true
 
       - name: Configure TestPyPI repository
-        if: steps.version_check.outputs.deploy_target == 'testpypi'
+        if: steps.check_branch.outputs.should_publish == 'true' && steps.version_check.outputs.deploy_target == 'testpypi'
         run: poetry config repositories.test-pypi https://test.pypi.org/legacy/
 
       - name: Publish to TestPyPI
-        if: steps.version_check.outputs.deploy_target == 'testpypi'
+        if: steps.check_branch.outputs.should_publish == 'true' && steps.version_check.outputs.deploy_target == 'testpypi'
 #        env:
 #          POETRY_HTTP_BASIC_TEST_PYPI_USERNAME: __token__
 #          POETRY_HTTP_BASIC_TEST_PYPI_PASSWORD: ${{ secrets.TEST_PYPI_TOKEN }}
         run: echo "Publishing to TestPyPI" #  && poetry publish -r test-pypi --skip-existing --build --no-interaction
 
       - name: Configure PyPI repository
-        if: steps.version_check.outputs.deploy_target == 'pypi'
+        if: steps.check_branch.outputs.should_publish == 'true' &&  steps.version_check.outputs.deploy_target == 'pypi'
         run: poetry config repositories.pypi https://upload.pypi.org/legacy/
 
       - name: Publish to PyPI
-        if: steps.version_check.outputs.deploy_target == 'pypi'
+        if: steps.check_branch.outputs.should_publish == 'true' && steps.version_check.outputs.deploy_target == 'pypi'
 #        env:
 #          POETRY_HTTP_BASIC_PYPI_USERNAME: __token__
 #          POETRY_HTTP_BASIC_PYPI_PASSWORD: ${{ secrets.PYPI_TOKEN }}
