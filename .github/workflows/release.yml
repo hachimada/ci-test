@@ -3,10 +3,8 @@ name: Publish to PyPI
 on:
   push:
     tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
-      - "v[0-9]+.[0-9]+.[0-9]+rc[0-9]+"
-    branches:
-      - "release/**"
+      - "[0-9]+.[0-9]+.[0-9]+"
+      - "[0-9]+.[0-9]+.[0-9]+rc[0-9]+"
 
 jobs:
   publish-pypi:
@@ -15,6 +13,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # include tag
+
+      - name: Check pushed tag on release/** branch
+        run: |
+          branches=$(git branch -r --contains "$GITHUB_SHA" | grep 'origin/release/')
+          if [ -z "$branches" ]; then
+            echo "Tag is not on a release/** branch. Skipping..." 
+            exit 0
+          fi
+
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -29,22 +38,20 @@ jobs:
         id: version_check
         run: |
           TAG_REF="${GITHUB_REF_NAME}"
-          TAG_REF="${TAG_REF#refs/tags/}"
+          TAG="${TAG_REF#refs/tags/}"
 
-          CLEAN_TAG="${TAG_REF#v}"
-
-          echo "Tag version (from GitHub): $CLEAN_TAG"
+          echo "Tag version (from GitHub): $TAG"
 
           CURRENT_VERSION=$(python -c "import toml; print(toml.load('pyproject.toml')['tool']['poetry']['version'])")
 
           echo "Version in pyproject.toml: $CURRENT_VERSION"
 
-          if [ "$CURRENT_VERSION" != "$CLEAN_TAG" ]; then
-            echo "ERROR: Version mismatch. Tag=$CLEAN_TAG, pyproject.toml=$CURRENT_VERSION"
+          if [ "$CURRENT_VERSION" != "$TAG" ]; then
+            echo "ERROR: Version mismatch. Tag=$TAG, pyproject.toml=$CURRENT_VERSION"
             exit 1
           fi
 
-          if [[ "$CLEAN_TAG" == *"rc"* ]]; then
+          if [[ "$TAG" == *"rc"* ]]; then
             echo "deploy_target=testpypi" >> $GITHUB_OUTPUT
           else
             echo "deploy_target=pypi" >> $GITHUB_OUTPUT
